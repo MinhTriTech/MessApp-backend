@@ -4,7 +4,11 @@ import dotenv from "dotenv";
 import { Server } from "socket.io";
 import http from "http";
 import { initSocket } from "./sockets/socket.js";
+
+import authRoutes from "./routes/authRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
+
+import { authMiddleware } from "./middleware/authMiddleware.js";
 
 dotenv.config();
 
@@ -13,7 +17,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use("/auth", authRoutes);
 app.use("/messages", messageRoutes);
+
+app.get("/me", authMiddleware, (req, res) => {
+    res.json(req.user);
+}); 
 
 const server = http.createServer(app);
 
