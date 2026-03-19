@@ -1,10 +1,13 @@
 import pool from "../config/db.js";
 import { createMessage } from "../models/message.model.js";
 import { createUser, findUserById } from "../models/user.model.js";
+import jwt from "jsonwebtoken";
 
 export const initSocket = (io) => {
     io.on("connection", (socket) => {
-        socket.on("start_conversation", async ({  userId, targetId }) => {
+        socket.on("start_conversation", async ({  targetId }) => {
+            const userId = socket.user.id;
+
             let result = await pool.query(
                 `
                 SELECT c.id
@@ -36,21 +39,24 @@ export const initSocket = (io) => {
                 conversationId = result.rows[0].id;
             }
 
-            socket.join(String(conversationId));
+            const room = `room_${conversationId}`;
+
+            socket.join(room);
 
             socket.emit("conversation_ready", { conversationId });
         });
 
-        socket.on("join_conversation", async (conversationId, user) => {
+        socket.on("join_conversation", async (conversationId) => {
             try {
-                
-                let existingUser = await findUserById(user.id);
+                let existingUser = await findUserById(socket.user.id);
                 
                 if (!existingUser) {
-                    await createUser({id: user.id, name: user.name});
+                    await createUser({id: socket.user.id, name: socket.user.name});
                 }
-                
-                socket.join(conversationId);
+
+                const room = `room_${conversationId}`;
+
+                socket.join(room);
             } catch (error) {
                 console.error("User error:", error);
             }
@@ -60,15 +66,17 @@ export const initSocket = (io) => {
             try {
                 console.log("Incoming message:", data);
 
-                const { conversation_id, sender_id, content} = data;
+                const { conversation_id, content} = data;
 
                 const saveMessage = await createMessage({
                     conversation_id,
-                    sender_id,
+                    sender_id: socket.user.id,
                     content,
                 });
 
-                io.to(conversation_id).emit("receive_message", saveMessage);
+                const room = `room_${conversation_id}`;
+
+                io.to(room).emit("receive_message", saveMessage);
             } catch (error) {
                 console.error("Error saving message:", error);
             }
@@ -77,5 +85,17 @@ export const initSocket = (io) => {
         socket.on("disconnect", () => {
             console.log("User disconnect");
         });
+    });
+
+    io.use((socket, next) => {
+        const token = socket.handshake.auth.token;
+        
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            socket.user = decoded;
+            next();
+        } catch (error) {
+            next(new Error("Unauthorized"));
+        }
     });
 };

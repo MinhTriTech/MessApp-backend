@@ -7,6 +7,7 @@ import { initSocket } from "./sockets/socket.js";
 
 import authRoutes from "./routes/authRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
+import conversationRoutes from "./routes/conversationRoutes.js";
 
 import { authMiddleware } from "./middleware/authMiddleware.js";
 
@@ -19,6 +20,7 @@ app.use(express.json());
 
 app.use("/auth", authRoutes);
 app.use("/messages", messageRoutes);
+app.use("/conversations", conversationRoutes);
 
 app.get("/me", authMiddleware, (req, res) => {
     res.json(req.user);
