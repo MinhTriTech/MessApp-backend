@@ -87,6 +87,19 @@ export const initSocket = (io) => {
             }
         });
 
+        socket.on("typing", ({ conversationId }) => {
+            const userId = socket.user.id;
+            const room = `room_${conversationId}`;
+            socket.to(room).emit("typing", { userId });
+        });
+
+        socket.on("stop_typing", ({ conversationId }) => {
+            const userId = socket.user.id;
+            const room = `room_${conversationId}`;
+            socket.to(room).emit("stop_typing", { userId });
+        });
+        
+
         socket.on("disconnect", () => {
             console.log("User disconnect");
         });
