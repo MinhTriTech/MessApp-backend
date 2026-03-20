@@ -4,12 +4,34 @@ export const getConversations = async (req, res) => {
     const userId = req.user.id;
 
     const result = await pool.query(`
-        SELECT c.id, c.created_at
+        SELECT 
+            c.id AS conversation_id,
+            u.id AS target_id,
+            u.name AS target_name,
+            m.content AS last_message,
+            m.created_at AS last_time
         FROM conversations c
-        JOIN conversation_participants cp
-            ON cp.conversation_id = c.id
-        WHERE cp.user_id = $1
-        ORDER BY c.created_at DESC
+
+        JOIN conversation_participants cp1
+            ON cp1.conversation_id = c.id
+
+        JOIN conversation_participants cp2
+            ON cp2.conversation_id = c.id
+            AND cp2.user_id != cp1.user_id
+
+        JOIN users u
+            ON u.id = cp2.user_id
+
+        LEFT JOIN LATERAL (
+            SELECT content, created_at
+            FROM messages 
+            WHERE conversation_id = c.id
+            ORDER BY created_at DESC
+            LIMIT 1
+        ) m ON true
+
+        WHERE cp1.user_id = $1
+        ORDER BY m.created_at DESC;
     `, [userId]);
 
     res.json(result.rows);
