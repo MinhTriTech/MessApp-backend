@@ -98,7 +98,34 @@ export const initSocket = (io) => {
             const room = `room_${conversationId}`;
             socket.to(room).emit("stop_typing", { userId });
         });
-        
+
+        socket.on("mark_seen", async ({ messageId }) => {
+            const userId = socket.user.id;
+
+            try {
+                await pool.query(`
+                    INSERT INTO message_reads (message_id, user_id)
+                    VALUES ($1, $2)
+                    ON CONFLICT (message_id, user_id) DO NOTHING 
+                `, [messageId, userId]);
+
+                const result = await pool.query(`
+                   SELECT conversation_id
+                   FROM messages
+                   WHERE id = $1 
+                `, [messageId]);
+
+                const conversationId = result.rows[0].conversation_id;
+                const room = `room_${conversationId}`;
+
+                socket.to(room).emit("message_seen", {
+                    messageId,
+                    userId
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        });        
 
         socket.on("disconnect", () => {
             console.log("User disconnect");
