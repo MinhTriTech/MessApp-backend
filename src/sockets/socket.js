@@ -62,6 +62,11 @@ export const initSocket = (io) => {
             }
         });
 
+        socket.on("leave_conversation", (conversationId) => {
+            const roomName = `room_${conversationId}`;
+            socket.leave(roomName);
+        });
+
         socket.on("send_message", async (data) => {
             try {
                 console.log("Incoming message:", data);
