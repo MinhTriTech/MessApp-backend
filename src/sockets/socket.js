@@ -1,10 +1,17 @@
 import pool from "../config/db.js";
+import { getParticipants } from "../models/conversation.model.js";
 import { createMessage } from "../models/message.model.js";
 import { createUser, findUserById } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 
 export const initSocket = (io) => {
     io.on("connection", (socket) => {
+        // Join user room
+        socket.on("join_user_room", () => {
+            const userId = socket.user.id;
+            socket.join(`user_${userId}`);
+        });
+
         socket.on("start_conversation", async ({  targetId }) => {
             const userId = socket.user.id;
 
@@ -69,8 +76,6 @@ export const initSocket = (io) => {
 
         socket.on("send_message", async (data) => {
             try {
-                console.log("Incoming message:", data);
-
                 const { conversation_id, content} = data;
 
                 const saveMessage = await createMessage({
@@ -79,8 +84,15 @@ export const initSocket = (io) => {
                     content,
                 });
 
-                const room = `room_${conversation_id}`;
+                const participants = await getParticipants(conversation_id);
 
+                participants.forEach((participant) => {
+                    if (participant.user_id !== socket.user.id) {
+                        io.to(`user_${participant.user_id}`).emit("new_message", saveMessage);
+                    }
+                });
+
+                const room = `room_${conversation_id}`;
                 io.to(room).emit("receive_message", saveMessage);
             } catch (error) {
                 console.error("Error saving message:", error);
