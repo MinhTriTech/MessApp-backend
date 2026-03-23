@@ -118,6 +118,9 @@ DB_PASSWORD=your_db_password
 DB_PORT=5432
 
 JWT_SECRET=your_jwt_secret_key
+
+EMAIL_USER=your_gmail@gmail.com
+EMAIL_APP_PASSWORD=your_16_char_google_app_password
 ```
 
 | Biến          | Mô tả                              |
@@ -129,6 +132,10 @@ JWT_SECRET=your_jwt_secret_key
 | `DB_PASSWORD` | Mật khẩu PostgreSQL                 |
 | `DB_PORT`     | Cổng PostgreSQL (mặc định: `5432`) |
 | `JWT_SECRET`  | Khóa bí mật để ký JWT token        |
+| `EMAIL_USER`  | Gmail dùng để gửi mail xác minh    |
+| `EMAIL_APP_PASSWORD` | Google App Password (16 ký tự) cho Gmail SMTP |
+
+> Lưu ý: Gmail SMTP không chấp nhận mật khẩu đăng nhập tài khoản Google thông thường. Cần bật 2-Step Verification và tạo **App Password** để dùng cho `EMAIL_APP_PASSWORD`.
 
 ---
 

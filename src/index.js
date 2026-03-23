@@ -22,10 +22,6 @@ app.use("/auth", authRoutes);
 app.use("/messages", messageRoutes);
 app.use("/conversations", conversationRoutes);
 
-app.get("/me", authMiddleware, (req, res) => {
-    res.json(req.user);
-}); 
-
 const server = http.createServer(app);
 
 const io = new Server(server, {
