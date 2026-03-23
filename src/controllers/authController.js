@@ -35,6 +35,8 @@ export const register = async (req, res) => {
 
         const user = result.rows[0];
 
+        sendVerificationEmail(user).catch(console.error);
+
         const token = jwt.sign(
             { id: user.id, email: user.email },
             process.env.JWT_SECRET
@@ -113,6 +115,30 @@ export const sendVerifyEmail = async (req, res) => {
     } catch(error) {
         res.status(500).json(error.message);
     }
+};
+
+const sendVerificationEmail = async (user) => {
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60);
+
+    await pool.query(
+        `INSERT INTO email_verification_tokens (user_id, token, expires_at)
+         VALUES ($1, $2, $3)`,
+        [user.id, token, expiresAt]
+    );
+
+    const verifyLink = `http://localhost:8000/auth/verifyEmail?token=${token}`;
+
+    await transporter.sendMail({
+        from: emailUser,
+        to: user.email,
+        subject: "Verify your email",
+        html: `
+            <h3>Xác nhận email</h3>
+            <p>Click vào link bên dưới:</p>
+            <a href="${verifyLink}">${verifyLink}</a>
+        `,
+    });
 };
 
 export const verifyEmail = async (req, res) => {
