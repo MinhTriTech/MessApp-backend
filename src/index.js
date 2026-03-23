@@ -8,8 +8,8 @@ import { initSocket } from "./sockets/socket.js";
 import authRoutes from "./routes/authRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 import conversationRoutes from "./routes/conversationRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
-import { authMiddleware } from "./middleware/authMiddleware.js";
 
 dotenv.config();
 
@@ -21,6 +21,7 @@ app.use(express.json());
 app.use("/auth", authRoutes);
 app.use("/messages", messageRoutes);
 app.use("/conversations", conversationRoutes);
+app.use("/users", userRoutes);
 
 const server = http.createServer(app);
 
