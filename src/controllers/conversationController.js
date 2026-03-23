@@ -68,3 +68,22 @@ export const createConversation = async (req, res) => {
 
     res.json({ id: conversationId});
 };
+
+export const getParticipantByConversation = async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+        
+        const query = `
+            SELECT u.id, u.name
+            FROM conversation_participants cp
+            JOIN users u ON cp.user_id = u.id
+            WHERE cp.conversation_id = $1
+        `;
+
+        const { rows } = await pool.query(query, [conversationId]);
+
+        return res.status(200).json(rows);
+    } catch (error) {
+        res.status(500).json({ error: "Internal server error"});
+    }
+};
