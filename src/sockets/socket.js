@@ -6,10 +6,12 @@ import jwt from "jsonwebtoken";
 
 export const initSocket = (io) => {
     io.on("connection", (socket) => {
+        const userRoom = `user_${socket.user.id}`;
+        socket.join(userRoom);
+
         // Join user room
         socket.on("join_user_room", () => {
-            const userId = socket.user.id;
-            socket.join(`user_${userId}`);
+            socket.join(userRoom);
         });
 
         socket.on("start_conversation", async ({  targetId }) => {

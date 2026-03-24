@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import { getParticipants } from "../models/conversation.model.js";
 
 export const getMessageByConversation = async (req, res) => {
     const { conversationId } = req.params;
@@ -49,6 +50,7 @@ export const uploadFileByConversation = async (req, res) => {
     try {
         const file = req.file;
         const { conversationId } = req.body;
+        const clientTempId = req.body.clientTempId || null;
         const userId = req.user.id;
 
         if (!file) {
@@ -74,13 +76,30 @@ export const uploadFileByConversation = async (req, res) => {
         VALUES ($1, $2, $3, $4)
         `, [message.id, file.originalname, file.mimetype, fileUrl]);
 
+        const uploadedMessage = {
+            ...message,
+            file_name: file.originalname,
+            file_type: file.mimetype,
+            file_url: fileUrl,
+            client_temp_id: clientTempId,
+        };
+
+        const io = req.app.get("io");
+
+        if (io) {
+            const participants = await getParticipants(conversationId);
+
+            participants.forEach((participant) => {
+                if (participant.user_id !== userId) {
+                    io.to(`user_${participant.user_id}`).emit("new_message", uploadedMessage);
+                }
+            });
+
+            io.to(`room_${conversationId}`).emit("receive_message", uploadedMessage);
+        }
+
         res.json({ 
-            message: {
-                ...message,
-                file_name: file.originalname,
-                file_type: file.mimetype,
-                file_url: fileUrl,
-            },
+            message: uploadedMessage,
             file: {
                 file_name: file.originalname,
                 file_type: file.mimetype,
