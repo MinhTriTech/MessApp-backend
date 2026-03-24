@@ -6,20 +6,25 @@ export const getMessageByConversation = async (req, res) => {
 
     try {
         let query = `
-            SELECT *
-            FROM messages
-            WHERE conversation_id = $1
+            SELECT
+                m.*,
+                mf.file_name,
+                mf.file_type,
+                mf.file_url
+            FROM messages m
+            LEFT JOIN message_files mf ON mf.message_id = m.id
+            WHERE m.conversation_id = $1
         `;
 
         const values = [conversationId];
 
         if (before) {
-            query += ` AND created_at < $2`;
+            query += ` AND m.created_at < $2`;
             values.push(before); 
         }
 
         query += `
-            ORDER BY created_at DESC
+            ORDER BY m.created_at DESC
             LIMIT $${values.length + 1}
         `;
 
@@ -40,29 +45,50 @@ export const getMessageByConversation = async (req, res) => {
     }
 };
 
-export const uploadFileByMessage = async (req, res) => {
+export const uploadFileByConversation = async (req, res) => {
     try {
         const file = req.file;
-        const { messageId } = req.body;
+        const { conversationId } = req.body;
+        const userId = req.user.id;
 
         if (!file) {
             return res.status(400).json({ message: "File is required"});
         }
 
-        if (!messageId) {
-            return res.status(400).json({ message: "messageId is required" });
+        if (!conversationId) {
+            return res.status(400).json({ message: "conversationId is required" });
         }
+
+        const messageResult = await pool.query(`
+           INSERT INTO messages (conversation_id, sender_id, content, type)
+           VALUES ($1, $2, $3, $4)
+           RETURNING * 
+        `, [conversationId, userId, "", "file"]);
+
+        const message = messageResult.rows[0];
 
         const fileUrl = `http://localhost:8000/uploads/${file.filename}`;
 
         await pool.query(`
         INSERT INTO message_files (message_id, file_name, file_type, file_url)
         VALUES ($1, $2, $3, $4)
-        `, [messageId, file.originalname, file.mimetype, fileUrl]);
+        `, [message.id, file.originalname, file.mimetype, fileUrl]);
 
-        res.json({ fileUrl, fileType: file.mimetype });
+        res.json({ 
+            message: {
+                ...message,
+                file_name: file.originalname,
+                file_type: file.mimetype,
+                file_url: fileUrl,
+            },
+            file: {
+                file_name: file.originalname,
+                file_type: file.mimetype,
+                file_url: fileUrl
+            }
+         });
     } catch (error) {
         console.error(error);
-        res.status(500).send("Upload error");
+        res.status(500).json({ message: "Upload error" });
     }
 };
