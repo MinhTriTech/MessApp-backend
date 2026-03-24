@@ -190,7 +190,11 @@ export const updateName = async (req, res) => {
 
 export const updateMe = async (req, res) => {
     const userId = req.user.id;
-    const { name, avatar } = req.body;
+    const { name } = req.body;
+
+    const avatarFromFile = req.file
+        ? `http://localhost:8000/uploads/avatars/${req.file.filename}`
+        : null;
 
     try {
         const result = await pool.query(`
@@ -199,7 +203,7 @@ export const updateMe = async (req, res) => {
         avatar = COALESCE($2, avatar)
         WHERE id = $3
         RETURNING id, name, avatar    
-        `, [name, avatar, userId]);
+        `, [name, avatarFromFile, userId]);
 
         res.json(result.rows[0]);
     } catch (error) {

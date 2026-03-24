@@ -69,7 +69,7 @@ export const uploadFileByConversation = async (req, res) => {
 
         const message = messageResult.rows[0];
 
-        const fileUrl = `http://localhost:8000/uploads/${file.filename}`;
+        const fileUrl = `http://localhost:8000/uploads/messages/${file.filename}`;
 
         await pool.query(`
         INSERT INTO message_files (message_id, file_name, file_type, file_url)
