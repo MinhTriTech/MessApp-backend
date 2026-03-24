@@ -16,14 +16,14 @@ export const searchUsers = async (req, res) => {
 
         if (isEmail) {
             result = await pool.query(`
-            SELECT id, name, email
+            SELECT id, name, email, avatar
             FROM users
             WHERE email = $1
             LIMIT 1    
             `, [keyword]);
         } else {
             result = await pool.query(`
-            SELECT id, name
+            SELECT id, name, avatar
             FROM users
             WHERE name ILIKE $1 AND id != $2
             LIMIT 10

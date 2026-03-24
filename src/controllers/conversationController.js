@@ -8,6 +8,7 @@ export const getConversations = async (req, res) => {
             c.id AS conversation_id,
             u.id AS target_id,
             u.name AS target_name,
+            u.avatar AS target_avatar,
             m.content AS last_message,
             m.created_at AS last_time
         FROM conversations c
