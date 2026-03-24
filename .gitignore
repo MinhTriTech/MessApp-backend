@@ -31,3 +31,6 @@ logs/
 
 # Misc
 .cache
+
+# Uploads
+uploads/
