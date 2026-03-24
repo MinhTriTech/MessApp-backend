@@ -1,3 +1,10 @@
+<div align="center">
+
+<!-- Banner / Logo -->
+<img src="docs/images/bannerBackend.png" alt="MessApp Banner" width="30%" />
+
+</div>
+
 # MessApp Backend
 
 Backend cho ứng dụng nhắn tin thời gian thực, được xây dựng bằng **Node.js**, **Express**, **Socket.IO** và **PostgreSQL**.
