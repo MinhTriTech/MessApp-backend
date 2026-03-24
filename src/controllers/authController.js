@@ -81,7 +81,7 @@ export const getMe = async (req, res) => {
     const userId = req.user.id;
 
     const result = await pool.query(
-    "SELECT id, email, name, is_verified FROM users WHERE id = $1", [userId]);
+    "SELECT id, email, name, avatar, is_verified FROM users WHERE id = $1", [userId]);
 
     res.json(result.rows[0]);
 };
@@ -186,4 +186,24 @@ export const updateName = async (req, res) => {
     } catch (error) {
         res.status(500).json(error.message);
     } 
+};
+
+export const updateMe = async (req, res) => {
+    const userId = req.user.id;
+    const { name, avatar } = req.body;
+
+    try {
+        const result = await pool.query(`
+        UPDATE users
+        SET name = COALESCE($1, name),
+        avatar = COALESCE($2, avatar)
+        WHERE id = $3
+        RETURNING id, name, avatar    
+        `, [name, avatar, userId]);
+
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
 };
