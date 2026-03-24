@@ -39,3 +39,30 @@ export const getMessageByConversation = async (req, res) => {
         res.status(500).json({ error: "Internal server error"});
     }
 };
+
+export const uploadFileByMessage = async (req, res) => {
+    try {
+        const file = req.file;
+        const { messageId } = req.body;
+
+        if (!file) {
+            return res.status(400).json({ message: "File is required"});
+        }
+
+        if (!messageId) {
+            return res.status(400).json({ message: "messageId is required" });
+        }
+
+        const fileUrl = `http://localhost:8000/uploads/${file.filename}`;
+
+        await pool.query(`
+        INSERT INTO message_files (message_id, file_name, file_type, file_url)
+        VALUES ($1, $2, $3, $4)
+        `, [messageId, file.originalname, file.mimetype, fileUrl]);
+
+        res.json({ fileUrl, fileType: file.mimetype });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Upload error");
+    }
+};

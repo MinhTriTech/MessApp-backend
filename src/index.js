@@ -18,10 +18,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Upload static
+app.use("/uploads", express.static("uploads"));
+
+// Routes
 app.use("/auth", authRoutes);
 app.use("/messages", messageRoutes);
 app.use("/conversations", conversationRoutes);
 app.use("/users", userRoutes);
+
 
 const server = http.createServer(app);
 
