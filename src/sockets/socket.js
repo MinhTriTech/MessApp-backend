@@ -78,7 +78,7 @@ export const initSocket = (io) => {
 
         socket.on("send_message", async (data) => {
             try {
-                const { conversation_id, content} = data;
+                const { conversation_id, content, client_temp_id } = data;
 
                 const saveMessage = await createMessage({
                     conversation_id,
@@ -86,16 +86,21 @@ export const initSocket = (io) => {
                     content,
                 });
 
+                const messageToEmit = {
+                    ...saveMessage,
+                    client_temp_id,
+                };
+
                 const participants = await getParticipants(conversation_id);
 
                 participants.forEach((participant) => {
                     if (participant.user_id !== socket.user.id) {
-                        io.to(`user_${participant.user_id}`).emit("new_message", saveMessage);
+                        io.to(`user_${participant.user_id}`).emit("new_message", messageToEmit);
                     }
                 });
 
                 const room = `room_${conversation_id}`;
-                io.to(room).emit("receive_message", saveMessage);
+                io.to(room).emit("receive_message", messageToEmit);
             } catch (error) {
                 console.error("Error saving message:", error);
             }
